@@ -51,33 +51,35 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-def GetAttachments(service, user_id, msg_id, store_dir):
-  """Get and store attachment from Message with given id.
+def GetAttachments(service, user_id, msg_id, prefix=""):
+    """Get and store attachment from Message with given id.
 
-  Args:
+    Args:
     service: Authorized Gmail API service instance.
     user_id: User's email address. The special value "me"
     can be used to indicate the authenticated user.
     msg_id: ID of Message containing attachment.
-    store_dir: The directory used to store attachments.
-  """
-  try:
-    message = service.users().messages().get(userId=user_id, id=msg_id).execute()
+    prefix: prefix which is added to the attachment filename on saving
+    """
+    try:
+        message = service.users().messages().get(userId=user_id, id=msg_id).execute()
 
-    for part in message['payload']['parts']:
-      if part['filename']:
+        for part in message['payload'].get('parts', ''):
+            if part['filename']:
+                if 'data' in part['body']:
+                    data=part['body']['data']
+                else:
+                    att_id=part['body']['attachmentId']
+                    att=service.users().messages().attachments().get(userId=user_id, messageId=msg_id,id=att_id).execute()
+                    data=att['data']
+                file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
+                path = prefix+part['filename']
 
-        file_data = base64.urlsafe_b64decode(part['body']['data']
-                                             .encode('UTF-8'))
+                with open(path, 'wb') as f:
+                    f.write(file_data)
 
-        path = ''.join([store_dir, part['filename']])
-
-        f = open(path, 'w')
-        f.write(file_data)
-        f.close()
-
-  except errors.HttpError as error:
-    print('An error occurred: %s' % error)
+    except errors.HttpError as error:
+        print('An error occurred: %s' % error)
 
 def get_unreaded_messages(service, user_id, labels):
     """
@@ -139,6 +141,7 @@ def main():
         MessageData['Snippet'] = message['snippet']
         print(MessageData)
         # mark_message_readed(service, 'me', MessageData['MessageId'])
+        GetAttachments(service, 'me', MessageData['MessageId'])
 
 if __name__ == '__main__':
     main()
