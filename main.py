@@ -51,9 +51,18 @@ def get_credentials():
 
 
 def get_unreaded_messages(service, user_id, labels):
+    """
+        Gmail'den user_id ve labels'e gore mesajlarin id'leri cekilir.
+    """
     return service.users().messages().list(
         userId=user_id, labelIds=labels).execute()
 
+def get_message(service, user_id, message_id):
+    """
+        Gmail'den user_id ve message_id'e gore mesaj cekilir.
+    """
+    return service.users().messages().get(
+            userId=user_id, id=message_id).execute()
 
 def main():
     """Shows basic usage of the Gmail API.
@@ -74,6 +83,14 @@ def main():
     print(messages_list)
     print(messages_amount)
 
+    # Tum mesajlar daha detayli cekilir.
+    for message_obj in messages_list:
+        message_id = message_obj['id']
+
+        message = get_message(service, 'me', message_id)
+
+        print(message)
+        print(message['snippet'])
 
 if __name__ == '__main__':
     main()
