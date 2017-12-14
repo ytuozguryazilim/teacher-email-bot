@@ -80,17 +80,28 @@ def main():
     messages_list = unreaded_messages['messages']
     messages_amount = len(messages_list)
 
-    print(messages_list)
-    print(messages_amount)
+    #print(messages_list)
+    #print(messages_amount)
 
     # Tum mesajlar daha detayli cekilir.
     for message_obj in messages_list:
+        MessageData = {}
         message_id = message_obj['id']
 
         message = get_message(service, 'me', message_id)
 
-        print(message)
-        print(message['snippet'])
+        for header in message['payload']['headers']:
+            if header['name'] == 'From':
+                MessageData['From'] = header['value']
+            if header['name'] == 'Subject':
+                MessageData['Subject'] = header['value']
+            if header['name'] == 'Date':
+                MessageData['Date'] = header['value']
+            if header['name'] == 'Content-Type':
+                MessageData['Content-Type'] = header['value']
+
+        MessageData['Snippet'] = message['snippet']
+        print(MessageData)
 
 if __name__ == '__main__':
     main()
