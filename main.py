@@ -60,15 +60,15 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
 
-    results = service.users().labels().list(userId='me').execute()
-    labels = results.get('labels', [])
+    # Gmailden okunmamis tum mesajlari al.
+    unreaded_messages = service.users().messages().list(
+        userId='me', labelIds=['INBOX', 'UNREAD']).execute()
 
-    if not labels:
-        print('No labels found.')
-    else:
-        print('Labels:')
-        for label in labels:
-            print(label['name'])
+    messages_list = unreaded_messages['messages']
+    messages_amount = len(messages_list)
+
+    print(messages_list)
+    print(messages_amount)
 
 if __name__ == '__main__':
     main()
