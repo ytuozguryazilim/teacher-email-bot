@@ -64,6 +64,13 @@ def get_message(service, user_id, message_id):
     return service.users().messages().get(
             userId=user_id, id=message_id).execute()
 
+def mark_message_readed(service, user_id, message_id):
+    """
+        Mesaj'i okunmus olarak isaretle.
+    """
+    return service.users().messages().modify(
+        userId=user_id, id=message_id, body={'removeLabelIds': ['UNREAD']}).execute()
+
 def main():
     """Shows basic usage of the Gmail API.
 
@@ -86,9 +93,9 @@ def main():
     # Tum mesajlar daha detayli cekilir.
     for message_obj in messages_list:
         MessageData = {}
-        message_id = message_obj['id']
+        MessageData['MessageId'] = message_obj['id']
 
-        message = get_message(service, 'me', message_id)
+        message = get_message(service, 'me', MessageData['MessageId'])
 
         for header in message['payload']['headers']:
             if header['name'] == 'From':
@@ -102,6 +109,7 @@ def main():
 
         MessageData['Snippet'] = message['snippet']
         print(MessageData)
+        # mark_message_readed(service, 'me', MessageData['MessageId'])
 
 if __name__ == '__main__':
     main()
