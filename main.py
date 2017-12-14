@@ -3,6 +3,8 @@ from __future__ import print_function
 import httplib2
 import os
 
+import base64
+from apiclient import errors
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
@@ -49,6 +51,33 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+def GetAttachments(service, user_id, msg_id, store_dir):
+  """Get and store attachment from Message with given id.
+
+  Args:
+    service: Authorized Gmail API service instance.
+    user_id: User's email address. The special value "me"
+    can be used to indicate the authenticated user.
+    msg_id: ID of Message containing attachment.
+    store_dir: The directory used to store attachments.
+  """
+  try:
+    message = service.users().messages().get(userId=user_id, id=msg_id).execute()
+
+    for part in message['payload']['parts']:
+      if part['filename']:
+
+        file_data = base64.urlsafe_b64decode(part['body']['data']
+                                             .encode('UTF-8'))
+
+        path = ''.join([store_dir, part['filename']])
+
+        f = open(path, 'w')
+        f.write(file_data)
+        f.close()
+
+  except errors.HttpError as error:
+    print('An error occurred: %s' % error)
 
 def get_unreaded_messages(service, user_id, labels):
     """
