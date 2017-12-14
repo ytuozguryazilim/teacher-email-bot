@@ -50,6 +50,11 @@ def get_credentials():
     return credentials
 
 
+def get_unreaded_messages(service, user_id, labels):
+    return service.users().messages().list(
+        userId=user_id, labelIds=labels).execute()
+
+
 def main():
     """Shows basic usage of the Gmail API.
 
@@ -61,14 +66,14 @@ def main():
     service = discovery.build('gmail', 'v1', http=http)
 
     # Gmailden okunmamis tum mesajlari al.
-    unreaded_messages = service.users().messages().list(
-        userId='me', labelIds=['INBOX', 'UNREAD']).execute()
+    unreaded_messages = get_unreaded_messages(service, 'me', ['INBOX', 'UNREAD'])
 
     messages_list = unreaded_messages['messages']
     messages_amount = len(messages_list)
 
     print(messages_list)
     print(messages_amount)
+
 
 if __name__ == '__main__':
     main()
