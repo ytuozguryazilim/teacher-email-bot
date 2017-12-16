@@ -75,7 +75,7 @@ def GetAttachments(service, user_id, msg_id, prefix=""):
                     att=service.users().messages().attachments().get(userId=user_id, messageId=msg_id,id=att_id).execute()
                     data=att['data']
                 file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
-                path = prefix+part['filename']
+                path = prefix + "/" + part['filename']
 
                 with open(path, 'wb') as f:
                     f.write(file_data)
@@ -142,6 +142,16 @@ def is_valid_mail(Mail):
     result_subject = is_valid_subject(Mail["Subject"])
     return result_subject
 
+def create_directory(s_obj):
+    """
+        Suanlik dizini reponun icine olusturucak. University/Year/Semester/CourseCode/Homework
+    """
+    pwd = os.getcwd()
+    path_list = [s_obj["University"], s_obj["Year"], s_obj["Semester"], s_obj["CourseCode"], s_obj["Homework"]]
+    directory_path = pwd + "/" + "/".join(path_list)
+    os.makedirs(directory_path, exist_ok=True)
+    return directory_path
+
 def main():
     """Shows basic usage of the Gmail API.
 
@@ -183,8 +193,9 @@ def main():
         result_mail = is_valid_mail(MessageData)
         if result_mail:
             print(result_mail)
+            dir_path = create_directory(result_mail)
             # mark_message_readed(service, 'me', MessageData['MessageId'])
-            GetAttachments(service, 'me', MessageData['MessageId'])
+            GetAttachments(service, 'me', MessageData['MessageId'], dir_path)
 
 if __name__ == '__main__':
     main()
