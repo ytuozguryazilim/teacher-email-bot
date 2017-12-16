@@ -1,201 +1,58 @@
-
-from __future__ import print_function
-import httplib2
-import os
-
-import base64
-from apiclient import errors
-from apiclient import discovery
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
-
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
-
-import re
-
-# If modifying these scopes, delete your previously saved credentials
-# at ~/.credentials/gmail-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
-APPLICATION_NAME = 'Gmail API Python Quickstart'
-
-
-def get_credentials():
-    """Gets valid user credentials from storage.
-
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    Returns:
-        Credentials, the obtained credential.
-    """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir,
-                                   'gmail-python-quickstart.json')
-
-    store = Storage(credential_path)
-    credentials = store.get()
-    if not credentials or credentials.invalid:
-        flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
-        flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else:  # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
-        print('Storing credentials to ' + credential_path)
-    return credentials
-
-def GetAttachments(service, user_id, msg_id, prefix=""):
-    """Get and store attachment from Message with given id.
-
-    Args:
-    service: Authorized Gmail API service instance.
-    user_id: User's email address. The special value "me"
-    can be used to indicate the authenticated user.
-    msg_id: ID of Message containing attachment.
-    prefix: prefix which is added to the attachment filename on saving
-    """
-    try:
-        message = service.users().messages().get(userId=user_id, id=msg_id).execute()
-
-        for part in message['payload'].get('parts', ''):
-            if part['filename']:
-                if 'data' in part['body']:
-                    data=part['body']['data']
-                else:
-                    att_id=part['body']['attachmentId']
-                    att=service.users().messages().attachments().get(userId=user_id, messageId=msg_id,id=att_id).execute()
-                    data=att['data']
-                file_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
-                path = prefix + "/" + part['filename']
-
-                with open(path, 'wb') as f:
-                    f.write(file_data)
-
-    except errors.HttpError as error:
-        print('An error occurred: %s' % error)
-
-def get_unreaded_messages(service, user_id, labels):
-    """
-        Gmail'den user_id ve labels'e gore mesajlarin id'leri cekilir.
-    """
-    return service.users().messages().list(
-        userId=user_id, labelIds=labels).execute()
-
-def get_message(service, user_id, message_id):
-    """
-        Gmail'den user_id ve message_id'e gore mesaj cekilir.
-    """
-    return service.users().messages().get(
-            userId=user_id, id=message_id).execute()
-
-def mark_message_readed(service, user_id, message_id):
-    """
-        Mesaj'i okunmus olarak isaretle.
-    """
-    return service.users().messages().modify(
-        userId=user_id, id=message_id, body={'removeLabelIds': ['UNREAD']}).execute()
-
-def is_valid_subject(subject):
-    """
-        Regex ile kontrol ediliyor. Eger uyusmuyorsa False, eger uyusuyorsa uyusanlar doner.
-        [Ytu-2015-Guz-BLM1551-HW2-1400128-EmreGuler] konu basligini parse ederek, dictionary donucez.
-        {
-            "University": "Ytu",
-            "Year": 2015,
-            "Semester": "Guz",
-            "CourseCode": "BLM1551",
-            "Homework": "HW2",
-            "StudentNumber": "1400128",
-            "StudentNameSurname": "EmreGuler"
-        }
-    """
-    subject_regex=r"(\w+)-(\d{4})-(\w+)-([0-9A-Z]+)-([0-9A-Z]+)-(\d+)-(\w+)"
-    m = re.match(subject_regex, subject.strip('[]'))
-    if m == None:
-        return False
-    else:
-        subject_obj = {}
-        subject_obj["University"] = m.group(1)
-        subject_obj["Year"] = m.group(2)
-        subject_obj["Semester"] = m.group(3)
-        subject_obj["CourseCode"] = m.group(4)
-        subject_obj["Homework"] = m.group(5)
-        subject_obj["StudentNumber"] = m.group(6)
-        subject_obj["StudentNameSurname"] = m.group(7)
-        return subject_obj
-
-def is_valid_mail(Mail):
-    """
-        Kontroller:
-        Mail'in konu basligi dogru formatta mi?
-        Bir sonraki versiyon, Mail'i gonderen mail adresiyle, mail'in konu kismindaki okul numarasi uyusuyor mu?
-    """
-    result_subject = is_valid_subject(Mail["Subject"])
-    return result_subject
-
-def create_directory(s_obj):
-    """
-        Suanlik dizini reponun icine olusturucak. University/Year/Semester/CourseCode/Homework
-    """
-    pwd = os.getcwd()
-    path_list = [s_obj["University"], s_obj["Year"], s_obj["Semester"], s_obj["CourseCode"], s_obj["Homework"]]
-    directory_path = pwd + "/" + "/".join(path_list)
-    os.makedirs(directory_path, exist_ok=True)
-    return directory_path
+import GmailApi
+import Util
 
 def main():
-    """Shows basic usage of the Gmail API.
+    AllMails = []
+    # Api'ye gore mail'ler toplaniyor.
+    WhichApi = "Gmail"
+    if WhichApi == "Gmail":
+        service = GmailApi.init()
 
-    Creates a Gmail API service object and outputs a list of label names
-    of the user's Gmail account.
-    """
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('gmail', 'v1', http=http)
+        # Gmailden okunmamis tum mesajlari al.
+        unreaded_messages = GmailApi.get_unreaded_messages(service, 'me', ['INBOX', 'UNREAD'])
 
-    # Gmailden okunmamis tum mesajlari al.
-    unreaded_messages = get_unreaded_messages(service, 'me', ['INBOX', 'UNREAD'])
+        messages_list = unreaded_messages['messages']
+        #messages_amount = len(messages_list)
 
-    messages_list = unreaded_messages['messages']
-    #messages_amount = len(messages_list)
+        #print(messages_list)
+        #print(messages_amount)
 
-    #print(messages_list)
-    #print(messages_amount)
+        # Tum mesajlar daha detayli cekilir.
+        for message_obj in messages_list:
+            MessageData = {}
+            MessageData['MessageId'] = message_obj['id']
 
-    # Tum mesajlar daha detayli cekilir.
-    for message_obj in messages_list:
-        MessageData = {}
-        MessageData['MessageId'] = message_obj['id']
+            message = GmailApi.get_message(service, 'me', MessageData['MessageId'])
 
-        message = get_message(service, 'me', MessageData['MessageId'])
+            for header in message['payload']['headers']:
+                if header['name'] == 'From':
+                    MessageData['From'] = header['value']
+                if header['name'] == 'Subject':
+                    MessageData['Subject'] = header['value']
+                if header['name'] == 'Date':
+                    MessageData['Date'] = header['value']
+                if header['name'] == 'Content-Type':
+                    MessageData['Content-Type'] = header['value']
 
-        for header in message['payload']['headers']:
-            if header['name'] == 'From':
-                MessageData['From'] = header['value']
-            if header['name'] == 'Subject':
-                MessageData['Subject'] = header['value']
-            if header['name'] == 'Date':
-                MessageData['Date'] = header['value']
-            if header['name'] == 'Content-Type':
-                MessageData['Content-Type'] = header['value']
+            MessageData['Snippet'] = message['snippet']
+            print(MessageData)
+            AllMails.append(MessageData)
 
-        MessageData['Snippet'] = message['snippet']
-        print(MessageData)
-        result_mail = is_valid_mail(MessageData)
+    else:
+        print("Outlook")
+
+    # Toplandiktan sonra konu basliklarina bakiliyor. Uygun olanlar kaydediliyor.
+    for mail in AllMails:
+        result_mail = Util.is_valid_mail(mail)
         if result_mail:
             print(result_mail)
-            dir_path = create_directory(result_mail)
-            # mark_message_readed(service, 'me', MessageData['MessageId'])
-            GetAttachments(service, 'me', MessageData['MessageId'], dir_path)
+            dir_path = Util.create_directory(result_mail)
+            # Mailler okundu olarak isaretle, ve mailden dosya cek.
+            if WhichApi == "Gmail":
+                # mark_message_readed(service, 'me', one_message['MessageId'])
+                GmailApi.GetAttachments(service, 'me', mail['MessageId'], dir_path)
+            else:
+                print("Outlook")
 
 if __name__ == '__main__':
     main()
