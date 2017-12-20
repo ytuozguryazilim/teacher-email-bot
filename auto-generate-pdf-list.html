@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h2>{{title}}</h2>
+    <table style="width:100%">
+        <tr>
+            <th>Index</th>
+            <th>StudentNumber</th>
+            <th>StudentNameSurname</th>
+            <th>Time</th>
+        </tr>
+        {% for student in students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ student.StudentNumber }}</td>
+                <td>{{ student.StudentNameSurname }}</td>
+                <td>{{ student.Time }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
