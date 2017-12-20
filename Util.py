@@ -1,5 +1,55 @@
 import os
 import re
+import GmailApi
+
+def get_messages_with_details(service, messages_list):
+    """
+        Mail yerine Message kullanmamizin sebebi google'un oyle adlandirmasindan dolayidir.
+        Mail'leri daha detayli sekilde doneriz.
+
+        {
+            "University": "Ytu",
+            "Year": 2015,
+            "Semester": "Guz",
+            "CourseCode": "BLM1551",
+            "Homework": "HW2",
+            "StudentNumber": "1400128",
+            "StudentNameSurname": "EmreGuler",
+            "Time": "",
+            "Directory": "${workspaceFolder}/Ytu/2015/Guz/BLM1551/HW2"
+        }
+    """
+    all_messages = []
+    for message_obj in messages_list:
+        MessageData = {}
+        MessageData['MessageId'] = message_obj['id']
+
+        message = GmailApi.get_message(service, 'me', MessageData['MessageId'])
+
+        for header in message['payload']['headers']:
+            if header['name'] == 'From':
+                MessageData['From'] = header['value']
+            if header['name'] == 'Subject':
+                MessageData['Subject'] = header['value']
+            if header['name'] == 'Date':
+                MessageData['Date'] = header['value']
+            if header['name'] == 'Content-Type':
+                MessageData['Content-Type'] = header['value']
+
+        MessageData['Snippet'] = message['snippet']
+
+        # Mail kabul edilen formata uygunsa, mail listesine eklenir.
+        result_mail = is_valid_mail(MessageData)
+        if result_mail:
+            dir_path = create_directory(result_mail)
+            result_mail['MessageId'] = MessageData['MessageId']
+            result_mail['From'] = MessageData['From']
+            result_mail['Time'] = MessageData['Date']
+            result_mail['Directory'] = dir_path
+            print(result_mail)
+            all_messages.append(result_mail)
+
+    return all_messages
 
 def is_valid_subject(subject):
     """
