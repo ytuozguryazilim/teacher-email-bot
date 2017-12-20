@@ -1,8 +1,9 @@
 import GmailApi
 import Util
+import Template2Pdf
 
 def main():
-    AllMails = []
+    Mails = []
     # Api'ye gore mail'ler toplaniyor.
     WhichApi = "Gmail"
     if WhichApi == "Gmail":
@@ -12,47 +13,29 @@ def main():
         unreaded_messages = GmailApi.get_unreaded_messages(service, 'me', ['INBOX', 'UNREAD'])
 
         messages_list = unreaded_messages['messages']
-        #messages_amount = len(messages_list)
-
-        #print(messages_list)
-        #print(messages_amount)
 
         # Tum mesajlar daha detayli cekilir.
-        for message_obj in messages_list:
-            MessageData = {}
-            MessageData['MessageId'] = message_obj['id']
-
-            message = GmailApi.get_message(service, 'me', MessageData['MessageId'])
-
-            for header in message['payload']['headers']:
-                if header['name'] == 'From':
-                    MessageData['From'] = header['value']
-                if header['name'] == 'Subject':
-                    MessageData['Subject'] = header['value']
-                if header['name'] == 'Date':
-                    MessageData['Date'] = header['value']
-                if header['name'] == 'Content-Type':
-                    MessageData['Content-Type'] = header['value']
-
-            MessageData['Snippet'] = message['snippet']
-            print(MessageData)
-            AllMails.append(MessageData)
-
+        Mails = Util.get_messages_with_details(service, messages_list)
     else:
         print("Outlook")
 
-    # Toplandiktan sonra konu basliklarina bakiliyor. Uygun olanlar kaydediliyor.
-    for mail in AllMails:
-        result_mail = Util.is_valid_mail(mail)
-        if result_mail:
-            print(result_mail)
-            dir_path = Util.create_directory(result_mail)
-            # Mailler okundu olarak isaretle, ve mailden dosya cek.
-            if WhichApi == "Gmail":
-                # mark_message_readed(service, 'me', one_message['MessageId'])
-                GmailApi.GetAttachments(service, 'me', mail['MessageId'], dir_path)
-            else:
-                print("Outlook")
+    # Mail listesi olusturulduktan, Mail icindeki ek dosyalar indirilecek ve mail okundu olarak isaretlenecek.
+    # Sonra mail'ler filtrelenecek, sonrasinda pdf olusturulacak.
+    StudentListForGeneratePdf = {}
+    for mail in Mails:
+        if WhichApi == "Gmail":
+            # mark_message_readed(service, 'me', mail['MessageId'])
+            GmailApi.GetAttachments(service, 'me', mail['MessageId'], mail['Directory'])
+        else:
+            print("Outlook")
+
+        # Filtreleme kismi
+        if StudentListForGeneratePdf.get(mail['Directory'], None) is None:
+            StudentListForGeneratePdf[mail['Directory']] = []
+        StudentListForGeneratePdf[mail['Directory']].append(mail)
+
+    print(StudentListForGeneratePdf)
+    Template2Pdf.create_pdfs(StudentListForGeneratePdf)
 
 if __name__ == '__main__':
     main()
