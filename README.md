@@ -20,3 +20,17 @@ Ornek Mail basliklari:
 [Ktu-2016-Bahar-BLM3841-Assignment3-100000112-RecepEr]
 
 Ileri versiyonunda sadece okul mail'iyle atilan mail'lere izin verilecek. Cunku herkes baska birinin yerine mail atarak, dosyalarin uzerine yazabilir.
+
+# Kurulum
+
+```bash
+  $ git clone https://github.com/GnuYtuce/teacher-email-bot/
+  $ cd teacher-email-bot/src
+  $ virtualenv venv
+  $ source venv/bin/active
+  $ pip install -r requirements.txt
+  $ # Sonraki adim olarak gmail api key'i almalisin. https://developers.google.com/gmail/api/quickstart/python
+  $ # aldigin "client_secret.json" dosyasini "src" klasorun altina koymalisin.
+  $ # Artik alttaki komutu calistirman yeterli olucak.
+  $ python main.py
+```
