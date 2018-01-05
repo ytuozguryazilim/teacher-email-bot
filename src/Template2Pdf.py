@@ -1,7 +1,7 @@
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
-env = Environment(loader=FileSystemLoader('.'))
+env = Environment(loader=FileSystemLoader('templates'))
 template = env.get_template("auto-generate-pdf-list.html")
 
 def create_pdfs(StudentsDict):
