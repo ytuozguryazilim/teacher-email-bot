@@ -11,7 +11,7 @@ Ileri versiyonunda sadece okul mail'iyle atilan mail'lere izin verilecek. Cunku 
 
 ```bash
                           $ git clone https://github.com/GnuYtuce/teacher-email-bot/
-  (teacher-email-bot/src) $ cd teacher-email-bot/src
+                          $ cd teacher-email-bot/src
   (teacher-email-bot/src) $ virtualenv venv
   (teacher-email-bot/src) $ source venv/bin/active
                    (venv) $ pip install -r requirements.txt
@@ -45,7 +45,7 @@ Ornek Mail basliklari:
 
 <code>[Odtu-2015-Guz-BLM1552-Q1-14400128-CediOsman]</code>
 
-<code>[Iu-2016-Bahar-BLM3841-Q5-100000112-YunusTira]</code>
+<code>[Iu-2016-Bahar-BLM3841-Q5-100000112-EmreGuler]</code>
 
 <code>[Mtu-2015-Guz-BLM1551-Project1-14400128-IsilAlben]</code>
 
